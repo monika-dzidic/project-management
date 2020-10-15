@@ -1,12 +1,11 @@
 #dependencies
 node_modules
 
-#productions
-assets/scripts
+#production
+public
 
 #misc
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.firebase
+database.rules.json
+debug.log
