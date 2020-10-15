@@ -8,7 +8,7 @@ const NotifyService = (function () {
     function createInstance() {
         var object = {
             isCreated: true,
-            timeout: 500000
+            timeout: 5000
         };
         return object;
     }
