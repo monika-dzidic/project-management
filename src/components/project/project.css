@@ -1,0 +1,34 @@
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.26);
+    padding: 1rem;
+    background: white;
+}
+
+h3 {
+    margin-right: 0.5rem;
+    color: var(--primary-text-color);
+}
+
+p {
+    color: var(--secondary-text-color);
+    margin: 1rem;
+    max-height: 7rem;
+    overflow: auto;
+}
+
+li:not(:last-child) {
+    margin-bottom: 0.5rem;
+}
+
+li .material-icons {
+    color: var(--dark-primary);
+}
+
+li .material-icons:hover {
+    color: var(--default-primary);
+}
+
+li .material-icons:first-child {
+    margin-right: 0.5rem;
+}

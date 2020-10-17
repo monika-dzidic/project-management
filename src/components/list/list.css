@@ -1,0 +1,56 @@
+#projects-container {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+}
+
+section {
+    margin: 1rem;
+}
+
+section > header {
+    background-color: var(--default-primary);
+    color: var(--text-primary);
+    padding: 0.5rem;
+}
+
+#projects-container h4 {
+    padding: 0.5rem;
+    background-color: whitesmoke;
+}
+
+ul {
+    padding: 0.5rem;
+    list-style: none;
+    max-height: 40rem;
+    overflow-y: auto;
+    background-color: whitesmoke;
+}
+
+.droppable {
+    background: var(--light-primary);
+}
+
+#add-project {
+    color: var(--text-primary);
+}
+
+#add-project:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+@media only screen and (max-width: 768px) {
+    ul {
+        max-height: 20rem;
+    }
+
+    #projects-container {
+        flex-direction: column;
+    }
+}
+
+@media only screen and (min-width: 768px) {
+    section {
+        width: 30rem;
+    }
+}

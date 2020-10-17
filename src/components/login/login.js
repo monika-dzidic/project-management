@@ -1,7 +1,9 @@
-import NotifyService from '../services/notify.service';
-import { clearEventListeners, toggleLoading } from '../util/dom-helper.service';
-import { isValidEmail, isValidPassword } from "../util/input-validation.service";
-import { NotificationTypeEnum } from '../enums/enums';
+import './login.css';
+
+import NotifyService from '../../services/notify.service';
+import { clearEventListeners, toggleLoading } from '../../util/dom-helper.service';
+import { isValidEmail, isValidPassword } from "../../util/input-validation.service";
+import { NotificationTypeEnum } from '../../enums/enums';
 
 export default class Login {
     constructor(authService) {
@@ -19,9 +21,9 @@ export default class Login {
     }
 
     async getSVGs() {
-        const googleSVG = import('../../assets/images/google.svg');
-        const gitHubSVG = import('../../assets/images/github.svg');
-        const facebookSVG = import('../../assets/images/facebook.svg');
+        const googleSVG = import('../../../assets/images/google.svg');
+        const gitHubSVG = import('../../../assets/images/github.svg');
+        const facebookSVG = import('../../../assets/images/facebook.svg');
 
         await Promise.all([googleSVG, gitHubSVG, facebookSVG]).then(svgs => {
             this.svgSrcs = svgs.map(s => s.default);

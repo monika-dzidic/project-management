@@ -1,8 +1,10 @@
+import './project.css';
+
 import * as firebase from 'firebase/app';
-import NotifyService from '../services/notify.service';
-import { clearEventListeners, createProjectModal, toggleLoading } from '../util/dom-helper.service';
-import { ItemTypeEnum, NotificationTypeEnum } from '../enums/enums';
-import { hash } from '../util/hash.service';
+import NotifyService from '../../services/notify.service';
+import { clearEventListeners, createProjectModal, toggleLoading } from '../../util/dom-helper.service';
+import { ItemTypeEnum, NotificationTypeEnum } from '../../enums/enums';
+import { hash } from '../../util/hash.service';
 
 export default class Project {
     constructor(id, title, content, type, updateProjectHandler, deleteProjectHandler) {
@@ -87,7 +89,7 @@ export default class Project {
 
     edit() {
         if (!this.editProjectModal) {
-            import('./modal.js').then(module => {
+            import('../modal/modal.js').then(module => {
                 this.editProjectModal = new module.default(createProjectModal('Edit project'));
                 this.editProjectModal.open({ title: this.title, content: this.content });
 

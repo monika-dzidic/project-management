@@ -1,4 +1,6 @@
-import { clearEventListeners } from "../util/dom-helper.service";
+import './modal.css'
+
+import { clearEventListeners } from '../../util/dom-helper.service';
 
 export default class Modal extends HTMLElement {
     constructor(templateInputs) {

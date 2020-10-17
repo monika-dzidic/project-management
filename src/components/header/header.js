@@ -1,5 +1,6 @@
+import './header.css';
 
-import { clearEventListeners } from '../util/dom-helper.service';
+import { clearEventListeners } from '../../util/dom-helper.service';
 
 export default class Header {
     constructor(authService) {

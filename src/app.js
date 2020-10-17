@@ -65,7 +65,7 @@ class App {
     }
 
     async loadListModule() {
-        this.listModule = await import('./components/list.js');
+        this.listModule = await import('./components/list/list.js');
         this.getLists();
     }
 
@@ -92,12 +92,12 @@ class App {
     }
 
     async loadLoginModule() {
-        this.loginModule = new (await import('./components/login.js')).default(this.authService);
+        this.loginModule = new (await import('./components/login/login.js')).default(this.authService);
         this.loginModule.getSVGs();
     }
 
     async loadHeaderModule() {
-        this.headerModule = new (await import('./components/header.js')).default(this.authService);
+        this.headerModule = new (await import('./components/header/header.js')).default(this.authService);
     }
 }
 

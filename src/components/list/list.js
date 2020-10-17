@@ -1,10 +1,12 @@
+import './list.css';
+
 import * as firebase from 'firebase/app';
-import NotifyService from '../services/notify.service';
-import Modal from './modal';
-import Project from './project';
-import { clearEventListeners, createProjectModal, insertElement, toggleLoading } from '../util/dom-helper.service';
-import { ItemTypeEnum, NotificationTypeEnum } from '../enums/enums';
-import { hash } from '../util/hash.service';
+import NotifyService from '../../services/notify.service';
+import Modal from '../modal/modal';
+import Project from '../project/project';
+import { clearEventListeners, createProjectModal, insertElement, toggleLoading } from '../../util/dom-helper.service';
+import { ItemTypeEnum, NotificationTypeEnum } from '../../enums/enums';
+import { hash } from '../../util/hash.service';
 
 export default class List {
 

@@ -1,0 +1,19 @@
+header {
+    background-color: var(--dark-primary);
+    color: var(--text-primary);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+img#menu {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+#logout {
+    font-size: 2rem;
+}
