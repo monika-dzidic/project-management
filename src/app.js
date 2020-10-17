@@ -9,9 +9,9 @@ import 'firebase/auth';
 import 'firebase/database';
 
 /*services*/
-import AuthService from './services/auth.service';
-import NotifyService from './services/notify.service';
-import { toggleLoading } from './util/dom-helper.service';
+import AuthService from './services/auth/auth.service';
+import NotifyService from './services/notify/notify.service';
+import { toggleLoading } from './util/dom-helper/dom-helper.service';
 
 import { ItemTypeEnum } from './enums/enums';
 

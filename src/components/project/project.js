@@ -1,10 +1,10 @@
 import './project.css';
 
 import * as firebase from 'firebase/app';
-import NotifyService from '../../services/notify.service';
-import { clearEventListeners, createProjectModal, toggleLoading } from '../../util/dom-helper.service';
+import NotifyService from '../../services/notify/notify.service';
+import { clearEventListeners, createProjectModal, toggleLoading } from '../../util/dom-helper/dom-helper.service';
 import { ItemTypeEnum, NotificationTypeEnum } from '../../enums/enums';
-import { hash } from '../../util/hash.service';
+import { hash } from '../../util/hash/hash.service';
 
 export default class Project {
     constructor(id, title, content, type, updateProjectHandler, deleteProjectHandler) {

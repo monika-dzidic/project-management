@@ -1,8 +1,8 @@
 import './login.css';
 
-import NotifyService from '../../services/notify.service';
-import { clearEventListeners, toggleLoading } from '../../util/dom-helper.service';
-import { isValidEmail, isValidPassword } from "../../util/input-validation.service";
+import NotifyService from '../../services/notify/notify.service';
+import { clearEventListeners, toggleLoading } from '../../util/dom-helper/dom-helper.service';
+import { isValidEmail, isValidPassword } from "../../util/input-validation/input-validation.service";
 import { NotificationTypeEnum } from '../../enums/enums';
 
 export default class Login {

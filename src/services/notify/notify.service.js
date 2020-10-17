@@ -1,4 +1,4 @@
-import { NotificationTypeEnum } from "../enums/enums";
+import { NotificationTypeEnum } from "../../enums/enums";
 
 const NotifyService = (function () {
     let instance = null;

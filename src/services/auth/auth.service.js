@@ -1,7 +1,7 @@
 import * as firebase from 'firebase/app';
-import NotifyService from './notify.service';
-import { NotificationTypeEnum } from '../enums/enums';
-import { toggleLoading } from '../util/dom-helper.service';
+import NotifyService from '../notify/notify.service';
+import { NotificationTypeEnum } from '../../enums/enums';
+import { toggleLoading } from '../../util/dom-helper/dom-helper.service';
 
 export default class AuthService {
     constructor() { }
