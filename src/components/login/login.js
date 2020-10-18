@@ -1,23 +1,13 @@
 import './login.css';
 
 import NotifyService from '../../services/notify/notify.service';
-import { clearEventListeners, toggleLoading } from '../../util/dom-helper/dom-helper.service';
+import { toggleLoading } from '../../util/dom-helper/dom-helper.service';
 import { isValidEmail, isValidPassword } from "../../util/input-validation/input-validation.service";
-import { NotificationTypeEnum } from '../../enums/enums';
+import { NotificationTypeEnum, ProviderEnum } from '../../enums/enums';
 
 export default class Login {
     constructor(authService) {
         this.authService = authService;
-        this.svgSrcs = [];
-        this.emailLoginForm = null;
-        this.emailButton = null;
-        this.emailInput = null;
-        this.passwordInput = null;
-        this.loginButton = null;
-        this.registerButton = null;
-        this.googleButton = null;
-        this.gitHubButton = null;
-        this.facebookButton = null;
     }
 
     async getSVGs() {
@@ -44,8 +34,9 @@ export default class Login {
             this.emailButton.classList.add('social-login');
             this.emailButton.innerText = 'Login with Email';
             this.emailButton.insertAdjacentHTML('afterbegin', '<span class="material-icons">email</span>');
+            this.toggleLoginFormHandler = this.toggleLoginForm.bind(this);
         }
-        this.emailButton.addEventListener('click', this.toggleLoginForm.bind(this));
+        this.emailButton.addEventListener('click', this.toggleLoginFormHandler);
 
         /*google login*/
         if (!this.googleButton) {
@@ -57,8 +48,9 @@ export default class Login {
             googleSVG.src = this.svgSrcs[0];
             googleSVG.alt = 'Login with Google';
             this.googleButton.insertAdjacentElement('afterbegin', googleSVG);
+            this.loginWithGoogleHandler = this.authService.loginWithProvider.bind(this.authService, ProviderEnum.Google());
         }
-        this.googleButton.addEventListener('click', this.authService.loginWithGoogle.bind(this.authService));
+        this.googleButton.addEventListener('click', this.loginWithGoogleHandler);
 
         /*github login*/
         if (!this.gitHubButton) {
@@ -70,8 +62,9 @@ export default class Login {
             gitHubSVG.src = this.svgSrcs[1];
             gitHubSVG.alt = 'Login with GitHub';
             this.gitHubButton.insertAdjacentElement('afterbegin', gitHubSVG);
+            this.loginWithGitHubHandler = this.authService.loginWithProvider.bind(this.authService, ProviderEnum.GitHub());
         }
-        this.gitHubButton.addEventListener('click', this.authService.loginWithGitHub.bind(this.authService));
+        this.gitHubButton.addEventListener('click', this.loginWithGitHubHandler);
 
         /*facebook login*/
         if (!this.facebookButton) {
@@ -83,15 +76,16 @@ export default class Login {
             facebookSVG.src = this.svgSrcs[2];
             facebookSVG.alt = 'Login with Facebook';
             this.facebookButton.insertAdjacentElement('afterbegin', facebookSVG);
+            this.loginWithFacebookHandler = this.authService.loginWithProvider.bind(this.authService, ProviderEnum.Facebook());
         }
-        this.facebookButton.addEventListener('click', this.authService.loginWithFacebook.bind(this.authService));
+        this.facebookButton.addEventListener('click', this.loginWithFacebookHandler);
 
-        this.loginButtonsContainer.insertAdjacentElement('beforeend', this.emailButton);
-        this.loginButtonsContainer.insertAdjacentElement('beforeend', this.googleButton);
-        this.loginButtonsContainer.insertAdjacentElement('beforeend', this.gitHubButton);
-        this.loginButtonsContainer.insertAdjacentElement('beforeend', this.facebookButton);
+        this.loginButtonsContainer.append(this.emailButton);
+        this.loginButtonsContainer.append(this.googleButton);
+        this.loginButtonsContainer.append(this.gitHubButton);
+        this.loginButtonsContainer.append(this.facebookButton);
 
-        document.body.insertAdjacentElement('beforeend', this.loginButtonsContainer);
+        document.body.append(this.loginButtonsContainer);
         toggleLoading(false);
     }
 
@@ -121,26 +115,28 @@ export default class Login {
                 this.loginButton = document.createElement('button');
                 this.loginButton.id = 'login';
                 this.loginButton.textContent = 'Login';
+                this.loginFormHandler = this.submitForm.bind(this, 'login');
             }
-            this.loginButton.addEventListener('click', this.submitForm.bind(this, 'login'));
+            this.loginButton.addEventListener('click', this.loginFormHandler);
 
             if (!this.registerButton) {
                 this.registerButton = document.createElement('button');
                 this.registerButton.id = 'register';
                 this.registerButton.textContent = 'Register';
+                this.registerFormHandler = this.submitForm.bind(this, 'register');
             }
-            this.registerButton.addEventListener('click', this.submitForm.bind(this, 'register'));
+            this.registerButton.addEventListener('click', this.registerFormHandler);
 
             const buttonContainer = document.createElement('div');
             buttonContainer.classList.add('flex', 'align-center', 'justify-center');
-            buttonContainer.insertAdjacentElement('afterbegin', this.loginButton);
-            buttonContainer.insertAdjacentElement('beforeend', this.registerButton);
+            buttonContainer.append(this.loginButton);
+            buttonContainer.append(this.registerButton);
 
-            this.emailLoginForm.insertAdjacentElement('afterbegin', this.emailInput);
-            this.emailLoginForm.insertAdjacentElement('beforeend', this.passwordInput);
-            this.emailLoginForm.insertAdjacentElement('beforeend', buttonContainer);
+            this.emailLoginForm.append(this.emailInput);
+            this.emailLoginForm.append(this.passwordInput);
+            this.emailLoginForm.append(buttonContainer);
 
-            document.body.insertAdjacentElement('beforeend', this.emailLoginForm);
+            document.body.append(this.emailLoginForm);
         }
     }
 
@@ -163,18 +159,18 @@ export default class Login {
     }
 
     removeLoginButtons() {
-        this.emailButton = clearEventListeners(this.emailButton);
-        this.googleButton = clearEventListeners(this.googleButton);
-        this.gitHubButton = clearEventListeners(this.gitHubButton);
-        this.facebookButton = clearEventListeners(this.facebookButton);
+        this.emailButton.removeEventListener('click', this.toggleLoginFormHandler);
+        this.googleButton.removeEventListener('click', this.loginWithGoogleHandler);
+        this.gitHubButton.removeEventListener('click', this.loginWithGitHubHandler);
+        this.facebookButton.removeEventListener('click', this.loginWithFacebookHandler);
         this.loginButtonsContainer.remove();
-        
+
         if (this.loginButton) {
-            this.loginButton = clearEventListeners(this.loginButton);
+            this.loginButton.removeEventListener('click', this.loginFormHandler);
         }
 
         if (this.registerButton) {
-            this.registerButton = clearEventListeners(this.registerButton);
+            this.registerButton.removeEventListener('click', this.registerFormHandler);
         }
 
         if (this.emailLoginForm) {

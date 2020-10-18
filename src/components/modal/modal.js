@@ -1,7 +1,5 @@
 import './modal.css'
 
-import { clearEventListeners } from '../../util/dom-helper/dom-helper.service';
-
 export default class Modal extends HTMLElement {
     constructor(templateInputs) {
         super();
@@ -15,7 +13,7 @@ export default class Modal extends HTMLElement {
 
         if (templateInputs) {
             templateInputs.forEach((element) => {
-                modal.insertAdjacentElement('beforeend', element);
+                modal.append(element);
             });
         }
 
@@ -34,9 +32,11 @@ export default class Modal extends HTMLElement {
         buttonContainer.append(this.confirmButton);
         modal.append(buttonContainer);
 
-        this.backdrop.addEventListener('click', this.hide.bind(this));
-        this.cancelButton.addEventListener('click', this.hide.bind(this));
-        this.confirmButton.addEventListener('click', this._confirm.bind(this));
+        this.hideHandler = this.hide.bind(this);
+        this.backdrop.addEventListener('click', this.hideHandler);
+        this.cancelButton.addEventListener('click', this.hideHandler);
+        this.confirmHandler = this._confirm.bind(this);
+        this.confirmButton.addEventListener('click', this.confirmHandler);
 
         this.append(this.backdrop);
         this.append(modal);
@@ -72,10 +72,10 @@ export default class Modal extends HTMLElement {
         this.dispatchEvent(confirmEvent);
     }
 
-    removeEventListeners() {
-        this.cancelButton = clearEventListeners(this.cancelButton);
-        this.confirmButton = clearEventListeners(this.confirmButton);
-        this.backdrop = clearEventListeners(this.backdrop);
+    removeModalEventListeners() {
+        this.cancelButton.removeEventListener('click', this.hideHandler);
+        this.confirmButton.removeEventListener('click', this.confirmHandler);
+        this.backdrop.removeEventListener('click', this.hideHandler);
     }
 }
 

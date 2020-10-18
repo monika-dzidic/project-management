@@ -1,6 +1,6 @@
 import * as firebase from 'firebase/app';
 import NotifyService from '../notify/notify.service';
-import { NotificationTypeEnum } from '../../enums/enums';
+import { NotificationTypeEnum, ProviderEnum } from '../../enums/enums';
 import { toggleLoading } from '../../util/dom-helper/dom-helper.service';
 
 export default class AuthService {
@@ -60,49 +60,42 @@ export default class AuthService {
         });
     }
 
-    loginWithGoogle() {
-        toggleLoading(true);
-
-        if (!this.googleProvider) {
-            this.googleProvider = new firebase.auth.GoogleAuthProvider();
+    loginWithProvider(providerId) {
+        let provider = null;
+        switch (providerId) {
+            case ProviderEnum.Google(): {
+                if (!this.googleProvider) {
+                    this.googleProvider = new firebase.auth.GoogleAuthProvider();
+                }
+                provider = this.googleProvider;
+                break;
+            }
+            case ProviderEnum.GitHub(): {
+                if (!this.gitHubProvider) {
+                    this.gitHubProvider = new firebase.auth.GithubAuthProvider();
+                }
+                provider = this.gitHubProvider;
+                break;
+            }
+            case ProviderEnum.Facebook(): {
+                if (!this.facebookProvider) {
+                    this.facebookProvider = new firebase.auth.FacebookAuthProvider();
+                }
+                provider = this.facebookProvider;
+                break;
+            }
         }
 
-        firebase.auth().signInWithPopup(this.googleProvider).then(response => {
-            this.photoURL = response.user.photoURL;
-            this.handleLogin();
-        }, error => {
-            this.handleError(error);
-        });
-    }
+        if (provider) {
+            toggleLoading(true);
 
-    loginWithGitHub() {
-        toggleLoading(true);
-
-        if (!this.githubProvider) {
-            this.githubProvider = new firebase.auth.GithubAuthProvider();
+            firebase.auth().signInWithPopup(provider).then(response => {
+                this.photoURL = response.user.photoURL;
+                this.handleLogin();
+            }, error => {
+                this.handleError(error);
+            });
         }
-
-        firebase.auth().signInWithPopup(this.githubProvider).then(response => {
-            this.photoURL = response.user.photoURL;
-            this.handleLogin();
-        }, error => {
-            this.handleError(error);
-        });
-    }
-
-    loginWithFacebook() {
-        toggleLoading(true);
-
-        if (!this.facebookProvider) {
-            this.facebookProvider = new firebase.auth.FacebookAuthProvider();
-        }
-
-        firebase.auth().signInWithPopup(this.facebookProvider).then(response => {
-            this.photoURL = response.user.photoURL;
-            this.handleLogin();
-        }, error => {
-            this.handleError(error);
-        });
     }
 
     signOut() {

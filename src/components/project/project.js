@@ -2,22 +2,19 @@ import './project.css';
 
 import * as firebase from 'firebase/app';
 import NotifyService from '../../services/notify/notify.service';
-import { clearEventListeners, createProjectModal, toggleLoading } from '../../util/dom-helper/dom-helper.service';
+import { createProjectModal, toggleLoading } from '../../util/dom-helper/dom-helper.service';
 import { ItemTypeEnum, NotificationTypeEnum } from '../../enums/enums';
 import { hash } from '../../util/hash/hash.service';
 
 export default class Project {
     constructor(id, title, content, type, updateProjectHandler, deleteProjectHandler) {
-        this.updateProjectCallback = updateProjectHandler;
-        this.deleteProjectCallback = deleteProjectHandler;
         this._id = id;
         this.title = title;
         this.content = content;
         this.type = type;
-        this.projectHTML = null;
-        this.editButton = null;
-        this.deleteButton = null;
-        this.switchButton = null;
+        this.editProjectHandler = this.openModal.bind(this);
+        this.deleteProjectHandler = deleteProjectHandler.bind(this, this);
+        this.updateProjectHandler = updateProjectHandler.bind(null, this._id);
 
         this.createProjectHTML();
     }
@@ -35,72 +32,75 @@ export default class Project {
 
         const title = document.createElement('h3');
         title.textContent = this.title;
-        container.insertAdjacentElement('afterbegin', title);
-        container.insertAdjacentElement('beforeend', buttonContainer);
-        this.projectHTML.insertAdjacentElement('afterbegin', container);
+        container.append(title);
+        container.append(buttonContainer);
+        this.projectHTML.append(container);
 
         const content = document.createElement('p');
         content.textContent = this.content;
-        this.projectHTML.insertAdjacentElement('beforeend', content);
+        this.projectHTML.append(content);
 
         this.editButton = document.createElement('span');
         this.editButton.id = 'edit-button';
         this.editButton.classList.add('material-icons');
         this.editButton.innerText = 'edit';
-        this.editButton.addEventListener('click', this.edit.bind(this));
-        buttonContainer.insertAdjacentElement('beforeend', this.editButton);
+        this.editButton.addEventListener('click', this.editProjectHandler);
+        buttonContainer.append(this.editButton);
 
         this.deleteButton = document.createElement('span');
         this.deleteButton.id = 'delete-button';
         this.deleteButton.classList.add('material-icons');
         this.deleteButton.innerText = 'delete';
-        this.deleteButton.addEventListener('click', this.deleteProjectCallback.bind(this, this));
-        buttonContainer.insertAdjacentElement('beforeend', this.deleteButton);
+        this.deleteButton.addEventListener('click', this.deleteProjectHandler);
+        buttonContainer.append(this.deleteButton);
 
         this.switchButton = document.createElement('button');
         this.switchButton.id = 'switch-button';
         this.switchButton.classList.add('switch');
-        this.switchButton.addEventListener('click', this.updateProjectCallback.bind(null, this._id));
+        this.switchButton.addEventListener('click', this.updateProjectHandler)
         this.type == ItemTypeEnum.active() ? this.switchButton.textContent = 'Finish' : this.switchButton.textContent = 'Activate';
-        this.projectHTML.insertAdjacentElement('beforeend', this.switchButton);
+        this.projectHTML.append(this.switchButton);
 
         this.connectDragEvents();
     }
 
     connectDragEvents() {
-        this.projectHTML.addEventListener('dragstart', event => {
-            event.dataTransfer.setData('text/plain', this._id);
-            event.dataTransfer.effectAllowed = 'move';
-        });
+        this.dragStarHandler = this.transferData.bind(this);
+        this.projectHTML.addEventListener('dragstart', this.dragStarHandler);
+    }
+
+    transferData(event) {
+        event.dataTransfer.setData('text/plain', this._id);
+        event.dataTransfer.effectAllowed = 'move';
     }
 
     updateHandlers(updateProjectHandler, deleteProjectHandler) {
-        this.updateProjectCallback = updateProjectHandler;
-        this.deleteProjectCallback = deleteProjectHandler;
+        this.switchButton.removeEventListener('click', this.updateProjectHandler);
+        this.updateProjectHandler = updateProjectHandler.bind(null, this._id);
+        this.switchButton.addEventListener('click', this.updateProjectHandler);
 
-        this.switchButton = clearEventListeners(this.switchButton);
-        this.switchButton.addEventListener('click', this.updateProjectCallback.bind(null, this._id));
-
-        this.deleteButton = clearEventListeners(this.deleteButton);
-        this.deleteButton.addEventListener('click', this.deleteProjectCallback.bind(this, this));
+        this.deleteButton.removeEventListener('click', this.deleteProjectHandler);
+        this.deleteProjectHandler = deleteProjectHandler.bind(this, this);
+        this.deleteButton.addEventListener('click', this.deleteProjectHandler);
 
         this.type == ItemTypeEnum.active() ? this.switchButton.textContent = 'Finish' : this.switchButton.textContent = 'Activate';
     }
 
-    edit() {
+    openModal() {
         if (!this.editProjectModal) {
             import('../modal/modal.js').then(module => {
                 this.editProjectModal = new module.default(createProjectModal('Edit project'));
                 this.editProjectModal.open({ title: this.title, content: this.content });
 
-                this.editProjectModal.addEventListener('confirm', this.update.bind(this));
+                this.confirmEditProjectHandler = this.validateEditProject.bind(this);
+                this.editProjectModal.addEventListener('confirm', this.confirmEditProjectHandler);
             });
         } else {
             this.editProjectModal.open({ title: this.title, content: this.content });
         }
     }
 
-    update(project) {
+    validateEditProject(project) {
         const title = project.detail.get('title');
         if (!title.length) {
             NotifyService.displayNotification(NotificationTypeEnum.error(), 'Title is required');
@@ -128,37 +128,42 @@ export default class Project {
         if (!hasTitleChange && !hasContentChange) {
             this.editProjectModal.hide();
         } else {
-            toggleLoading(true);
-
-            const ref = this.type == ItemTypeEnum.active() ? '/active-projects' : '/finished-projects';
-            firebase.database().ref(ref).child(`${firebase.auth().currentUser.uid}/${this._id}`)
-                .set({ title: this.title, content: this.content }).then(() => {
-                    if (hasTitleChange) {
-                        this.projectHTML.querySelector('h3').textContent = this.title;
-                    }
-                    if (hasContentChange) {
-                        this.projectHTML.querySelector('p').textContent = this.content;
-                    }
-                    toggleLoading(false);
-                    this.editProjectModal.hide();
-                    NotifyService.displayNotification(NotificationTypeEnum.info(), 'Successfully saved changes!');
-                }).catch(error => {
-                    toggleLoading(false);
-                    NotifyService.displayNotification(NotificationTypeEnum.error(), error.message);
-                });
+            this.update(hasTitleChange, hasContentChange);
         }
     }
 
+    update(hasTitleChange, hasContentChange) {
+        toggleLoading(true);
+
+        const ref = this.type == ItemTypeEnum.active() ? '/active-projects' : '/finished-projects';
+        firebase.database().ref(ref).child(`${firebase.auth().currentUser.uid}/${this._id}`)
+            .set({ title: this.title, content: this.content }).then(() => {
+                if (hasTitleChange) {
+                    this.projectHTML.querySelector('h3').textContent = this.title;
+                }
+                if (hasContentChange) {
+                    this.projectHTML.querySelector('p').textContent = this.content;
+                }
+                toggleLoading(false);
+                this.editProjectModal.hide();
+                NotifyService.displayNotification(NotificationTypeEnum.info(), 'Successfully saved changes!');
+            }).catch(error => {
+                toggleLoading(false);
+                NotifyService.displayNotification(NotificationTypeEnum.error(), error.message);
+            });
+    }
+
     removeProject() {
-        this.editButton = clearEventListeners(this.editButton);
-        this.deleteButton = clearEventListeners(this.deleteButton);
-        this.switchButton = clearEventListeners(this.switchButton);
+        this.switchButton.removeEventListener('click', this.updateProjectHandler);
+        this.deleteButton.removeEventListener('click', this.deleteProjectHandler);
+        this.editButton.removeEventListener('click', this.editProjectHandler);
+
         if (this.editProjectModal) {
-            this.editProjectModal.removeEventListeners();
-            this.editProjectModal = clearEventListeners(this.editProjectModal);
+            this.editProjectModal.removeEventListener('confirm', this.confirmEditProjectHandler);
+            this.editProjectModal.removeModalEventListeners();
         }
 
-        this.projectHTML = clearEventListeners(this.projectHTML);
+        this.projectHTML.removeEventListener('dragstart', this.dragStarHandler);
 
         this.projectHTML.remove();
         this._id = null;

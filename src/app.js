@@ -77,15 +77,15 @@ class App {
         const getFinishedProjects = this.finishedProjects.getProjects();
 
         Promise.all([getActiveProjects, getFinishedProjects]).then(() => {
-            const projectContainer = document.createElement('div');
-            projectContainer.id = 'projects-container';
-            projectContainer.insertAdjacentElement('afterbegin', this.activeProjects.section);
-            projectContainer.insertAdjacentElement('beforeend', this.finishedProjects.section);
-
             this.activeProjects.setSwitchHandlerFunction(this.finishedProjects.addProject.bind(this.finishedProjects));
             this.finishedProjects.setSwitchHandlerFunction(this.activeProjects.addProject.bind(this.activeProjects));
 
-            document.body.insertAdjacentElement('beforeend', projectContainer);
+            const projectContainer = document.createElement('div');
+            projectContainer.id = 'projects-container';
+
+            projectContainer.append(this.activeProjects.section);
+            projectContainer.append(this.finishedProjects.section);
+            document.body.append(projectContainer)
 
             toggleLoading(false);
         });

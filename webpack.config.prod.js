@@ -15,11 +15,13 @@ module.exports = merge(common, {
     publicPath: ''
   },
   optimization: {
+    minimize: true,
     minimizer: [
       new OptimizeCssAssetsPlugin(),
       new TerserPlugin(),
       new HtmlWebpackPlugin({
         template: 'index.html',
+        favicon: './assets/images/favico.png',
         minify: {
           removeAttributeQuotes: true,
           collapseWhitespace: true,

@@ -1,4 +1,4 @@
-export function hash(key) {
+exports.hash = (key) => {
     var hash = 0, i, chr;
     for (i = 0; i < key.length; i++) {
         chr = key.charCodeAt(i);

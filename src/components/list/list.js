@@ -2,9 +2,8 @@ import './list.css';
 
 import * as firebase from 'firebase/app';
 import NotifyService from '../../services/notify/notify.service';
-import Modal from '../modal/modal';
 import Project from '../project/project';
-import { clearEventListeners, createProjectModal, insertElement, toggleLoading } from '../../util/dom-helper/dom-helper.service';
+import { createProjectModal, toggleLoading } from '../../util/dom-helper/dom-helper.service';
 import { ItemTypeEnum, NotificationTypeEnum } from '../../enums/enums';
 import { hash } from '../../util/hash/hash.service';
 
@@ -14,12 +13,6 @@ export default class List {
         this.projectType = type;
         this.projectType == ItemTypeEnum.active() ? this._ref = '/active-projects' : this._ref = '/finished-projects';
         this._projects = new Map();
-        this.switchCallback = null;
-
-        if (this.projectType == ItemTypeEnum.active()) {
-            this.newProjectModal = new Modal(createProjectModal('Add new project'));
-            this.newProjectModal.addEventListener('confirm', this.validateProjectEdit.bind(this));
-        }
     }
 
     setSwitchHandlerFunction(switchHandlerFunction) {
@@ -34,7 +27,6 @@ export default class List {
                     const project = new Project(key, projects[key].title, projects[key].content, this.projectType, this.updateProject.bind(this), this.deleteProject.bind(this));
                     this._projects.set(project._id, project);
                 }
-
                 this.createSection();
                 resolve();
             }, error => {
@@ -44,21 +36,20 @@ export default class List {
     }
 
     createSection() {
-        if (!this.section) {
-            this.section = document.createElement('section');
-            const header = document.createElement('header');
-            const h2 = document.createElement('h2');
+        this.section = document.createElement('section');
+        const header = document.createElement('header');
+        const h2 = document.createElement('h2');
 
-            if (this.projectType == ItemTypeEnum.active()) {
-                h2.textContent = 'Active projects';
-                header.insertAdjacentElement('beforeend', this.createAddProjectIcon());
-            } else {
-                h2.textContent = 'Finished projects';
-            }
-
-            header.insertAdjacentElement('afterbegin', h2);
-            this.section.insertAdjacentElement('afterbegin', header);
+        header.append(h2);
+        
+        if (this.projectType == ItemTypeEnum.active()) {
+            h2.textContent = 'Active projects';
+            header.append(this.createAddProjectIcon());
+        } else {
+            h2.textContent = 'Finished projects';
         }
+
+        this.section.append(header);
 
         this._projects.size > 0 ? this.createList() : this.createMessage();
 
@@ -66,30 +57,33 @@ export default class List {
     }
 
     connectDragEvents() {
-        this.section.addEventListener('dragenter', event => {
+        this.dragEnterHandler = event => {
             if (event.dataTransfer.types[0] === 'text/plain') {
                 const projectList = this.section.querySelector('ul');
                 if (projectList) {
                     projectList.classList.add('droppable');
                 }
             }
-        });
+        };
+        this.section.addEventListener('dragenter', this.dragEnterHandler.bind(this));
 
-        this.section.addEventListener('dragover', event => {
+        this.dragOverHandler = event => {
             if (event.dataTransfer.types[0] === 'text/plain') {
                 event.preventDefault();
             }
-        });
+        };
+        this.section.addEventListener('dragover', this.dragOverHandler.bind(this));
 
-        this.section.addEventListener('dragleave', event => {
+        this.dragLeaveHandler = event => {
             const listId = this.projectType == ItemTypeEnum.active() ? 'active-projects-list' : 'finished-projects-list';
             const projectList = this.section.querySelector('ul');
             if (event.relatedTarget && event.relatedTarget.closest(`#${listId}`) !== projectList) {
                 projectList.classList.remove('droppable');
             }
-        });
+        };
+        this.section.addEventListener('dragleave', this.dragLeaveHandler.bind(this));
 
-        this.section.addEventListener('drop', event => {
+        this.dropHandler = event => {
             const projectList = this.section.querySelector('ul');
             if (projectList) {
                 projectList.classList.remove('droppable');
@@ -99,7 +93,8 @@ export default class List {
             if (this._projects.has(projectId)) { return; }
             const projectHash = hash(projectId);
             document.getElementById(`${projectHash}`).querySelector('#switch-button').click();
-        });
+        };
+        this.section.addEventListener('drop', this.dropHandler.bind(this));
     }
 
     createAddProjectIcon() {
@@ -108,27 +103,42 @@ export default class List {
             this.addProjectIcon.id = 'add-project';
             this.addProjectIcon.classList.add('material-icons');
             this.addProjectIcon.textContent = 'add_circle';
+            this.openModalHandler = this.openModal.bind(this);
         }
-        this.addProjectIcon.addEventListener('click', this.newProjectModal.open.bind(this.newProjectModal));
+        this.addProjectIcon.addEventListener('click', this.openModalHandler);
         return this.addProjectIcon;
+    }
+
+    openModal() {
+        if (!this.newProjectModal) {
+            import('../modal/modal.js').then(module => {
+                this.newProjectModal = new module.default(createProjectModal('Add new project'));
+                this.confirmNewProjectHandler = this.validateNewProject.bind(this);
+                this.newProjectModal.addEventListener('confirm', this.confirmNewProjectHandler);
+                this.newProjectModal.open();
+            });
+        } else {
+            this.newProjectModal.open();
+        }
     }
 
     createMessage() {
         const h4 = document.createElement('h4');
         this.projectType == ItemTypeEnum.active() ? h4.textContent = 'No active projects.' : h4.textContent = 'No finished projects.';
-        this.section.insertAdjacentElement('beforeend', h4);
+        this.section.append(h4);
     }
 
     createList() {
         const projectList = document.createElement('ul');
         projectList.id = this.projectType == ItemTypeEnum.active() ? 'active-projects-list' : 'finished-projects-list';
         for (const project of this._projects.values()) {
-            insertElement(project.projectHTML, projectList);
+            projectList.append(project.projectHTML);
+            project.projectHTML.scrollIntoView({ behavior: 'smooth' });
         }
-        this.section.insertAdjacentElement('beforeend', projectList);
+        this.section.append(projectList);
     }
 
-    validateProjectEdit(project) {
+    validateNewProject(project) {
         const title = project.detail.get('title');
         if (!title.length) {
             NotifyService.displayNotification(NotificationTypeEnum.error(), 'Title is required');
@@ -168,7 +178,8 @@ export default class List {
             if (this._projects.size == 1) {
                 this.createList();
             } else {
-                insertElement(project.projectHTML, this.section.querySelector('ul'));
+                this.section.querySelector('ul').append(project.projectHTML);
+                project.projectHTML.scrollIntoView({ behavior: 'smooth' });
             }
             if (!isNewProject) {
                 project.updateHandlers(this.updateProject.bind(this), this.deleteProject.bind(this));
@@ -221,19 +232,23 @@ export default class List {
 
     removeSection() {
         if (this.addProjectIcon) {
-            this.addProjectIcon = clearEventListeners(this.addProjectIcon);
+            this.addProjectIcon.removeEventListener('click', this.openModalHandler);
         }
 
         if (this.newProjectModal) {
-            this.newProjectModal.removeEventListeners();
-            this.newProjectModal = clearEventListeners(this.newProjectModal);
+            this.newProjectModal.removeEventListener('confirm', this.confirmNewProjectHandler);
+            this.newProjectModal.removeModalEventListeners();
         }
 
-        for (const project in this._projects.values()) {
+        for (const project of this._projects.values()) {
             project.removeProject();
         }
 
-        this.section = clearEventListeners(this.section);
+        this.section.removeEventListener('dragenter', this.dragEnterHandler);
+        this.section.removeEventListener('dragover', this.dragOverHandler);
+        this.section.removeEventListener('dragleave', this.dragLeaveHandler);
+        this.section.removeEventListener('drop', this.dropHandler);
+
         this._projects = null;
     }
 
