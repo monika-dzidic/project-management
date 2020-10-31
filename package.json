@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "webpack-dev-server --config webpack.config.dev.js --open",
+    "test": "jest",
     "build": "webpack --config webpack.config.prod.js"
   },
   "author": "Monika Džidić",

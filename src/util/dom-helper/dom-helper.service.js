@@ -26,8 +26,8 @@ exports.toggleLoading = (loading) => {
         overlay.classList.add('overlay');
         const loadingBar = document.createElement('div');
         loadingBar.classList.add('loader');
-        document.body.append(overlay);
         overlay.append(loadingBar);
+        document.body.append(overlay);
     } else {
         document.body.style.pointerEvents = '';
         const loadingBar = document.querySelector('.loader');
