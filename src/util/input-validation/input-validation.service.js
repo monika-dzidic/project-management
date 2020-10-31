@@ -6,5 +6,5 @@ exports.isValidEmail = (email) => {
 }
 
 exports.isValidPassword = (password) => {
-    return password.trim() && password.trim().length >= 5 ? true : false;
+    return password && password.trim().length >= 5 ? true : false;
 }

@@ -1,4 +1,12 @@
 exports.hash = (key) => {
+    if (!key) {
+        key = new Date().getMilliseconds().toLocaleString();
+    }
+
+    if (typeof key !== 'string') {
+        key = key.toString();
+    }
+
     var hash = 0, i, chr;
     for (i = 0; i < key.length; i++) {
         chr = key.charCodeAt(i);

@@ -62,10 +62,6 @@ const NotifyService = (function () {
                 HTMLElement.classList.remove('fade');
                 HTMLElement.remove();
             }, instance.timeout);
-        },
-
-        hasNotificationDisplayed() {
-            return currentNotificationTimeout ? true : false;
         }
     }
 })();
