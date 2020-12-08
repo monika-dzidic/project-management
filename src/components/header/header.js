@@ -1,13 +1,10 @@
+import AuthService from '../../services/auth/auth.service';
 import './header.css';
 
 export default class Header {
-    constructor(authService) {
-        this.authService = authService
-        this.createHeader();
-
-        if (this.authService.loggedIn) {
-            this.createMenuIcon();
-        }
+    constructor() {
+        this.authService = new AuthService();
+        this.authService.setLoginHandlerFunction(this.createMenuIcon.bind(this));
     }
 
     createHeader() {
@@ -18,12 +15,18 @@ export default class Header {
         document.body.append(this.header);
     }
 
-    createMenuIcon() {
-        this.logoutHandler = this.logoutUser.bind(this);
-        if (this.authService.photoURL) {
-            this.createUserIcon();
+    createMenuIcon(isLoggedIn) {
+        if (!this.logoutHandler) {
+            this.logoutHandler = this.authService.signOut.bind(this);
+        }
+        if (isLoggedIn) {
+            if (this.authService.photoURL) {
+                this.createUserIcon();
+            } else {
+                this.createLogoutButton();
+            }
         } else {
-            this.createLogoutButton();
+            this.removeMenuIcon();
         }
     }
 
@@ -56,9 +59,5 @@ export default class Header {
             this.logoutButton.remove();
             this.logoutButton = null;
         }
-    }
-
-    logoutUser() {
-        this.authService.signOut().then(() => this.removeMenuIcon());
     }
 }

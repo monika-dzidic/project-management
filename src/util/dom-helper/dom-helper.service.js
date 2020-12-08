@@ -23,6 +23,7 @@ exports.toggleLoading = (loading) => {
     if (loading) {
         document.body.style.pointerEvents = 'none';
         const overlay = document.createElement('div');
+        //todo:: add class loading to deffer betwen modal overlay and loading overlay
         overlay.classList.add('overlay');
         const loadingBar = document.createElement('div');
         loadingBar.classList.add('loader');

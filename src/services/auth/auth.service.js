@@ -4,33 +4,29 @@ import { NotificationTypeEnum, ProviderEnum } from '../../enums/enums';
 import { toggleLoading } from '../../util/dom-helper/dom-helper.service';
 
 export default class AuthService {
-    constructor() { }
+    constructor() {
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                if (this.loginCallback) {
+                    this.loginCallback(true);
+                }
+                if (user.photoURL) {
+                    this.photoURL = user.photoURL;
+                }
+            } else {
+                if (this.loginCallback) {
+                    this.loginCallback(false);
+                }
+            }
+        });
+    }
 
     setLoginHandlerFunction(loginHandler) {
         this.loginCallback = loginHandler;
     }
 
-    isLoggedIn() {
-        return new Promise((resolve, reject) => {
-            firebase.auth().onAuthStateChanged(user => {
-                if (user) {
-                    this.loggedIn = true;
-                    if (user.photoURL) {
-                        this.photoURL = user.photoURL;
-                    }
-                } else {
-                    this.loggedIn = false;
-                }
-                resolve(user);
-            }, error => {
-                reject(error);
-            });
-        });
-    }
-
-    handleLogin() {
-        this.loggedIn = true;
-        this.loginCallback(this.loggedIn);
+    getUser() {
+        return firebase.auth().currentUser;
     }
 
     handleError(error) {
@@ -43,7 +39,6 @@ export default class AuthService {
 
         firebase.auth().signInWithEmailAndPassword(email, password).then(response => {
             this.photoURL = response.photoURL;
-            this.handleLogin();
         }, error => {
             this.handleError(error);
         });
@@ -54,7 +49,6 @@ export default class AuthService {
 
         firebase.auth().createUserWithEmailAndPassword(email, password).then(response => {
             this.photoURL = response.user.photoURL;
-            this.handleLogin();
         }, error => {
             this.handleError(error);
         });
@@ -91,7 +85,6 @@ export default class AuthService {
 
             firebase.auth().signInWithPopup(provider).then(response => {
                 this.photoURL = response.user.photoURL;
-                this.handleLogin();
             }, error => {
                 this.handleError(error);
             });
@@ -101,15 +94,8 @@ export default class AuthService {
     signOut() {
         toggleLoading(true);
 
-        return new Promise((resolve, reject) => {
-            firebase.auth().signOut().then(() => {
-                this.loggedIn = false;
-                this.loginCallback(this.loggedIn);
-                resolve();
-            }, error => {
-                this.handleError(error);
-                reject();
-            });
+        firebase.auth().signOut().then(() => { }, error => {
+            this.handleError(error);
         });
     }
 }

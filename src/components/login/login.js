@@ -4,10 +4,13 @@ import NotifyService from '../../services/notify/notify.service';
 import { toggleLoading } from '../../util/dom-helper/dom-helper.service';
 import { isValidEmail, isValidPassword } from "../../util/input-validation/input-validation.service";
 import { NotificationTypeEnum, ProviderEnum } from '../../enums/enums';
+import AuthService from '../../services/auth/auth.service';
 
 export default class Login {
-    constructor(authService) {
-        this.authService = authService;
+    constructor() {
+        this.authService = new AuthService();
+        this.authService.setLoginHandlerFunction(this.handleButtons.bind(this));
+        this.svgSrcs = new Map();
     }
 
     async getSVGs() {
@@ -15,10 +18,22 @@ export default class Login {
         const gitHubSVG = import('../../../assets/images/github.svg');
         const facebookSVG = import('../../../assets/images/facebook.svg');
 
-        await Promise.all([googleSVG, gitHubSVG, facebookSVG]).then(svgs => {
-            this.svgSrcs = svgs.map(s => s.default);
-            this.createLoginButtons();
+        return await Promise.all([googleSVG, gitHubSVG, facebookSVG]).then(svgs => {
+            this.svgSrcs.set(ProviderEnum.Google, svgs[0].default);
+            this.svgSrcs.set(ProviderEnum.GitHub, svgs[1].default);
+            this.svgSrcs.set(ProviderEnum.Facebook, svgs[2].default);
         });
+    }
+
+    async handleButtons(loggedIn) {
+        if (this.svgSrcs.size == 0) {
+            await this.getSVGs();
+        }
+        if (loggedIn) {
+            this.removeLoginButtons();
+        } else {
+            this.createLoginButtons();
+        }
     }
 
     createLoginButtons() {
@@ -45,7 +60,7 @@ export default class Login {
             this.googleButton.classList.add('social-login');
             this.googleButton.innerText = 'Login with Google';
             const googleSVG = document.createElement('img');
-            googleSVG.src = this.svgSrcs[0];
+            googleSVG.src = this.svgSrcs.get(ProviderEnum.Google);
             googleSVG.alt = 'Login with Google';
             this.googleButton.insertAdjacentElement('afterbegin', googleSVG);
             this.loginWithGoogleHandler = this.authService.loginWithProvider.bind(this.authService, ProviderEnum.Google());
@@ -59,7 +74,7 @@ export default class Login {
             this.gitHubButton.classList.add('social-login');
             this.gitHubButton.innerText = 'Login with GitHub';
             const gitHubSVG = document.createElement('img');
-            gitHubSVG.src = this.svgSrcs[1];
+            gitHubSVG.src = this.svgSrcs.get(ProviderEnum.GitHub);
             gitHubSVG.alt = 'Login with GitHub';
             this.gitHubButton.insertAdjacentElement('afterbegin', gitHubSVG);
             this.loginWithGitHubHandler = this.authService.loginWithProvider.bind(this.authService, ProviderEnum.GitHub());
@@ -73,7 +88,7 @@ export default class Login {
             this.facebookButton.classList.add('social-login');
             this.facebookButton.innerText = 'Login with Facebook';
             const facebookSVG = document.createElement('img');
-            facebookSVG.src = this.svgSrcs[2];
+            facebookSVG.src = this.svgSrcs.get(ProviderEnum.Facebook);
             facebookSVG.alt = 'Login with Facebook';
             this.facebookButton.insertAdjacentElement('afterbegin', facebookSVG);
             this.loginWithFacebookHandler = this.authService.loginWithProvider.bind(this.authService, ProviderEnum.Facebook());
