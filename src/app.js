@@ -15,8 +15,6 @@ import { toggleLoading } from './util/dom-helper/dom-helper.service';
 
 import { ItemTypeEnum } from './enums/enums';
 import Header from './components/header/header';
-import List from './components/list/list';
-import Login from './components/login/login';
 
 class App {
     init() {
@@ -49,7 +47,8 @@ class App {
         }
     }
 
-    getLists() {
+    async getLists() {
+        const List = await (await import('./components/list/list.js')).default;
         this.activeProjects = new List(ItemTypeEnum.active());
         this.finishedProjects = new List(ItemTypeEnum.finished());
 
@@ -78,10 +77,12 @@ class App {
         }
     }
 
-    loadLoginModule() {
-        if (!this.login) {
-            this.login = new Login();
-        }
+    async loadLoginModule() {
+        import('./components/login/login.js').then(module => {
+            if (!this.login) {
+                this.login = new module.default();
+            }
+        })
     }
 }
 
