@@ -32,8 +32,7 @@ class App {
 
         NotifyService.initializeService();
 
-        this.authService = new AuthService();
-        this.authService.setLoginHandlerFunction(this.loggedInHandler.bind(this));
+        this.authService = new AuthService(this.loggedInHandler.bind(this));
         this.header = new Header();
         this.header.createHeader();
     }

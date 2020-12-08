@@ -4,25 +4,23 @@ import { NotificationTypeEnum, ProviderEnum } from '../../enums/enums';
 import { toggleLoading } from '../../util/dom-helper/dom-helper.service';
 
 export default class AuthService {
-    constructor() {
+    constructor(loginHandler) {
+        this.loginCallback = loginHandler;
         firebase.auth().onAuthStateChanged(user => {
             if (user) {
-                if (this.loginCallback) {
-                    this.loginCallback(true);
-                }
                 if (user.photoURL) {
                     this.photoURL = user.photoURL;
                 }
+                if (this.loginCallback) {
+                    this.loginCallback(true);
+                }
             } else {
+                this.photoURL = null;
                 if (this.loginCallback) {
                     this.loginCallback(false);
                 }
             }
         });
-    }
-
-    setLoginHandlerFunction(loginHandler) {
-        this.loginCallback = loginHandler;
     }
 
     getUser() {

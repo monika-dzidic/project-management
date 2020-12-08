@@ -8,8 +8,7 @@ import AuthService from '../../services/auth/auth.service';
 
 export default class Login {
     constructor() {
-        this.authService = new AuthService();
-        this.authService.setLoginHandlerFunction(this.handleButtons.bind(this));
+        this.authService = new AuthService(this.handleButtons.bind(this));
         this.svgSrcs = new Map();
     }
 

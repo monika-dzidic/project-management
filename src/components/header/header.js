@@ -3,8 +3,7 @@ import './header.css';
 
 export default class Header {
     constructor() {
-        this.authService = new AuthService();
-        this.authService.setLoginHandlerFunction(this.createMenuIcon.bind(this));
+        this.authService = new AuthService(this.createMenuIcon.bind(this));
     }
 
     createHeader() {
