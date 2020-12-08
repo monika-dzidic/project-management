@@ -14,6 +14,7 @@ import NotifyService from './services/notify/notify.service';
 import { toggleLoading } from './util/dom-helper/dom-helper.service';
 
 import { ItemTypeEnum } from './enums/enums';
+import Header from './components/header/header';
 
 class App {
     init() {
@@ -31,52 +32,26 @@ class App {
 
         NotifyService.initializeService();
 
-        this.authService = new AuthService();
-        this.authService.setLoginHandlerFunction(this.loggedInHandler.bind(this));
-
-        this.authService.isLoggedIn().then(response => {
-            if (response) {
-                this.loadHeaderModule();
-                this.loadListModule();
-            } else {
-                this.loadHeaderModule();
-                this.loadLoginModule();
-            }
-        });
+        this.authService = new AuthService(this.loggedInHandler.bind(this));
+        this.header = new Header();
+        this.header.createHeader();
     }
 
     loggedInHandler(loggedIn) {
         if (loggedIn) {
-            if (this.loginModule) {
-                this.loginModule.removeLoginButtons();
-            }
-            this.listModule ? this.getLists() : this.loadListModule();
-            this.headerModule.createMenuIcon();
+            this.getLists();
         } else {
-            this.activeProjects.removeSection();
-            this.activeProjects = null;
-            this.finishedProjects.removeSection();
-            this.finishedProjects = null;
-            document.getElementById('projects-container').remove();
-
-            this.loginModule ? this.loginModule.createLoginButtons() : this.loadLoginModule();
-            this.headerModule.removeMenuIcon();
+            this.removeLists();
+            this.loadLoginModule();
         }
     }
 
-    async loadListModule() {
-        this.listModule = await import('./components/list/list.js');
-        this.getLists();
-    }
+    async getLists() {
+        const List = await (await import('./components/list/list.js')).default;
+        this.activeProjects = new List(ItemTypeEnum.active());
+        this.finishedProjects = new List(ItemTypeEnum.finished());
 
-    getLists() {
-        this.activeProjects = new this.listModule.default(ItemTypeEnum.active());
-        this.finishedProjects = new this.listModule.default(ItemTypeEnum.finished());
-
-        const getActiveProjects = this.activeProjects.getProjects();
-        const getFinishedProjects = this.finishedProjects.getProjects();
-
-        Promise.all([getActiveProjects, getFinishedProjects]).then(() => {
+        Promise.all([this.activeProjects.getProjects(), this.finishedProjects.getProjects()]).then(() => {
             this.activeProjects.setSwitchHandlerFunction(this.finishedProjects.addProject.bind(this.finishedProjects));
             this.finishedProjects.setSwitchHandlerFunction(this.activeProjects.addProject.bind(this.activeProjects));
 
@@ -91,13 +66,22 @@ class App {
         });
     }
 
-    async loadLoginModule() {
-        this.loginModule = new (await import('./components/login/login.js')).default(this.authService);
-        this.loginModule.getSVGs();
+    removeLists() {
+        if (this.activeProjects || this.finishedProjects) {
+            this.activeProjects.removeSection();
+            this.activeProjects = null;
+            this.finishedProjects.removeSection();
+            this.finishedProjects = null;
+            document.getElementById('projects-container').remove();
+        }
     }
 
-    async loadHeaderModule() {
-        this.headerModule = new (await import('./components/header/header.js')).default(this.authService);
+    async loadLoginModule() {
+        import('./components/login/login.js').then(module => {
+            if (!this.login) {
+                this.login = new module.default();
+            }
+        })
     }
 }
 
