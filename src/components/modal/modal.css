@@ -1,15 +1,9 @@
 modal-template {
-    position: absolute;
-    top: 0px;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: relative;
+    margin: auto;
 }
 
 #modal {
-    position: relative;
     z-index: 1000;
     max-width: 25rem;
     background-color: white;

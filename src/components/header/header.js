@@ -11,7 +11,7 @@ export default class Header {
         const h1 = document.createElement('h1');
         h1.textContent = 'PManagement';
         this.header.append(h1);
-        document.body.append(this.header);
+        document.body.insertAdjacentElement('afterbegin', this.header);
     }
 
     createMenuIcon(isLoggedIn) {

@@ -99,7 +99,7 @@ export default class Login {
         this.loginButtonsContainer.append(this.gitHubButton);
         this.loginButtonsContainer.append(this.facebookButton);
 
-        document.body.append(this.loginButtonsContainer);
+        document.body.querySelector('header').insertAdjacentElement('afterend', this.loginButtonsContainer);
         toggleLoading(false);
     }
 
@@ -150,7 +150,7 @@ export default class Login {
             this.emailLoginForm.append(this.passwordInput);
             this.emailLoginForm.append(buttonContainer);
 
-            document.body.append(this.emailLoginForm);
+            document.body.querySelector('#login-container').insertAdjacentElement('afterend', this.emailLoginForm);
         }
     }
 

@@ -60,7 +60,7 @@ class App {
 
             projectContainer.append(this.activeProjects.section);
             projectContainer.append(this.finishedProjects.section);
-            document.body.append(projectContainer)
+            document.body.querySelector('header').insertAdjacentElement('afterend', projectContainer)
 
             toggleLoading(false);
         });

@@ -4,8 +4,6 @@ export default class Modal extends HTMLElement {
     constructor(templateInputs) {
         super();
 
-        this.isOpen = false;
-
         this.backdrop = document.createElement('div');
         this.backdrop.classList.add('overlay');
         const modal = document.createElement('div');
@@ -37,8 +35,6 @@ export default class Modal extends HTMLElement {
         this.cancelButton.addEventListener('click', this.hideHandler);
         this.confirmHandler = this._confirm.bind(this);
         this.confirmButton.addEventListener('click', this.confirmHandler);
-
-        this.append(this.backdrop);
         this.append(modal);
     }
 
@@ -49,17 +45,19 @@ export default class Modal extends HTMLElement {
                 input.value = inputs[name];
             }
         }
-        this.isOpen = true;
-        document.body.append(this);
+        document.body.insertAdjacentElement('afterbegin', this.backdrop);
+        this.backdrop.append(this);
     }
 
-    hide() {
-        const hasInputs = this.querySelectorAll('input');
-        for (const input of hasInputs) {
-            input.value = '';
+    hide(event) {
+        if (!event || event.target.classList.contains('overlay') || event.target.id == 'cancel') {
+            const hasInputs = this.querySelectorAll('input');
+            for (const input of hasInputs) {
+                input.value = '';
+            }
+            this.remove();
+            this.backdrop.remove();
         }
-        this.isOpen = false;
-        this.remove();
     }
 
     _confirm() {
