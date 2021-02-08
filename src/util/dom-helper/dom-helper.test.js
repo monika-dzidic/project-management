@@ -1,23 +1,30 @@
-const { createProjectModal, toggleLoading } = require('./dom-helper.service');
+const { createInputElement, createButtonElement, toggleLoading } = require('./dom-helper.service');
 
-test('should create modal for project with title and two inputs', () => {
-    const modal1 = createProjectModal();
-    expect(modal1[0].textContent).toBe('PManagement');
+test('should create HTML input with attributes', () => {
+    const testInputs = ['test', 'email', 'password'];
+    testInputs.forEach(test => {
+        const input = createInputElement(test);
+        expect(input).toBeDefined();
+        expect(input instanceof HTMLInputElement).toBe(true);
+        expect(input.id).toBe(test)
+        expect(input.name).toBe(test)
+        expect(input.placeholder).toBe(test[0].toUpperCase() + test.substring(1));
+        expect(input.autocomplete).toBe('off');
+        if (test == 'password' || test == 'email') expect(input.type).toBeDefined();
+        else expect(input.type).toBe('text');
+    })
+});
 
-    expect(modal1[1]).not.toBe(undefined);
-    expect(modal1[1].name).toBe('title');
-    expect(modal1[1].placeholder).toBe('Title');
-    expect(modal1[1].autocomplete).toBe('off');
-
-    expect(modal1[2]).not.toBe(undefined);
-    expect(modal1[2].name).toBe('content');
-    expect(modal1[2].placeholder).toBe('Content');
-    expect(modal1[2].autocomplete).toBe('off');
-
-    const title = 'Test';
-    const modal2 = createProjectModal(title);
-    expect(modal2[0].textContent).toBe(title);
-    expect(modal2.length).toBe(3);
+test('should create HTML button with attributes', () => {
+    const testInputs = ['test'];
+    testInputs.forEach(test => {
+        const button = createButtonElement(test);
+        expect(button).toBeDefined();
+        expect(button instanceof HTMLButtonElement).toBe(true);
+        expect(button.id).toBe(test)
+        expect(button.name).toBe(test)
+        expect(button.textContent).toBe(test.toUpperCase());
+    })
 });
 
 test('should toggle loading', () => {

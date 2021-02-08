@@ -2,7 +2,8 @@ import './project.css';
 
 import * as firebase from 'firebase/app';
 import NotifyService from '../../services/notify/notify.service';
-import { createProjectModal, toggleLoading } from '../../util/dom-helper/dom-helper.service';
+import ModalService from '../../services/modal/modal.service';
+import { createInputElement, toggleLoading } from '../../util/dom-helper/dom-helper.service';
 import { ItemTypeEnum, NotificationTypeEnum } from '../../enums/enums';
 import { hash } from '../../util/hash/hash.service';
 
@@ -56,9 +57,9 @@ export default class Project {
 
         this.switchButton = document.createElement('button');
         this.switchButton.id = 'switch-button';
-        this.switchButton.classList.add('switch');
+        this.switchButton.classList.add('btn-accent', 'switch');
         this.switchButton.addEventListener('click', this.updateProjectHandler)
-        this.type == ItemTypeEnum.active() ? this.switchButton.textContent = 'Finish' : this.switchButton.textContent = 'Activate';
+        this.type == ItemTypeEnum.active ? this.switchButton.textContent = 'Finish' : this.switchButton.textContent = 'Activate';
         this.projectHTML.append(this.switchButton);
 
         this.connectDragEvents();
@@ -83,33 +84,35 @@ export default class Project {
         this.deleteProjectHandler = deleteProjectHandler.bind(this, this);
         this.deleteButton.addEventListener('click', this.deleteProjectHandler);
 
-        this.type == ItemTypeEnum.active() ? this.switchButton.textContent = 'Finish' : this.switchButton.textContent = 'Activate';
+        this.type == ItemTypeEnum.active ? this.switchButton.textContent = 'Finish' : this.switchButton.textContent = 'Activate';
     }
 
     openModal() {
-        if (!this.editProjectModal) {
-            import('../modal/modal.js').then(module => {
-                this.editProjectModal = new module.default(createProjectModal('Edit project'));
-                this.editProjectModal.open({ title: this.title, content: this.content });
+        const title = createInputElement('title');
+        title.setAttribute('value', this.title);
 
-                this.confirmEditProjectHandler = this.validateEditProject.bind(this);
-                this.editProjectModal.addEventListener('confirm', this.confirmEditProjectHandler);
-            });
-        } else {
-            this.editProjectModal.open({ title: this.title, content: this.content });
-        }
+        const content = createInputElement('content');
+        content.setAttribute('value', this.content);
+
+        ModalService.open(
+            'Edit project',
+            `<div slot="content">
+                ${title.outerHTML}
+                ${content.outerHTML}
+            </div>`,
+            this.validateEditProject.bind(this));
     }
 
-    validateEditProject(project) {
-        const title = project.detail.get('title');
-        if (!title.length) {
-            NotifyService.displayNotification(NotificationTypeEnum.error(), 'Title is required');
+    validateEditProject(event) {
+        const title = event.detail[0].value;
+        if (!title.trim().length) {
+            NotifyService.displayNotification(NotificationTypeEnum.error, 'Title is required');
             return;
         }
 
-        const content = project.detail.get('content');
-        if (!content.length) {
-            NotifyService.displayNotification(NotificationTypeEnum.error(), 'Content is required');
+        const content = event.detail[1].value;
+        if (!content.trim().length) {
+            NotifyService.displayNotification(NotificationTypeEnum.error, 'Content is required');
             return;
         }
 
@@ -126,7 +129,7 @@ export default class Project {
         }
 
         if (!hasTitleChange && !hasContentChange) {
-            this.editProjectModal.hide();
+            ModalService.hide();
         } else {
             this.update(hasTitleChange, hasContentChange);
         }
@@ -135,21 +138,17 @@ export default class Project {
     update(hasTitleChange, hasContentChange) {
         toggleLoading(true);
 
-        const ref = this.type == ItemTypeEnum.active() ? '/active-projects' : '/finished-projects';
+        const ref = this.type == ItemTypeEnum.active ? '/active-projects' : '/finished-projects';
         firebase.database().ref(ref).child(`${firebase.auth().currentUser.uid}/${this._id}`)
             .set({ title: this.title, content: this.content }).then(() => {
-                if (hasTitleChange) {
-                    this.projectHTML.querySelector('h3').textContent = this.title;
-                }
-                if (hasContentChange) {
-                    this.projectHTML.querySelector('p').textContent = this.content;
-                }
+                if (hasTitleChange) this.projectHTML.querySelector('h3').textContent = this.title;
+                if (hasContentChange) this.projectHTML.querySelector('p').textContent = this.content;
                 toggleLoading(false);
-                this.editProjectModal.hide();
-                NotifyService.displayNotification(NotificationTypeEnum.info(), 'Successfully saved changes!');
+                ModalService.hide();
+                NotifyService.displayNotification(NotificationTypeEnum.info, 'Successfully saved changes!');
             }).catch(error => {
                 toggleLoading(false);
-                NotifyService.displayNotification(NotificationTypeEnum.error(), error.message);
+                NotifyService.displayNotification(NotificationTypeEnum.error, error.message);
             });
     }
 
@@ -157,11 +156,6 @@ export default class Project {
         this.switchButton.removeEventListener('click', this.updateProjectHandler);
         this.deleteButton.removeEventListener('click', this.deleteProjectHandler);
         this.editButton.removeEventListener('click', this.editProjectHandler);
-
-        if (this.editProjectModal) {
-            this.editProjectModal.removeEventListener('confirm', this.confirmEditProjectHandler);
-            this.editProjectModal.removeModalEventListeners();
-        }
 
         this.projectHTML.removeEventListener('dragstart', this.dragStarHandler);
 

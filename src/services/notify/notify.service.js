@@ -6,8 +6,7 @@ const NotifyService = (function () {
     let currentNotificationTimeout = null;
 
     function createInstance() {
-        var object = {
-            isCreated: true,
+        let object = {
             timeout: 5000
         };
         return object;
@@ -21,19 +20,13 @@ const NotifyService = (function () {
 
     return {
         initializeService() {
-            if (!instance) {
-                instance = createInstance();
-            }
-            if (!HTMLElement) {
-                HTMLElement = createHTML();
-            }
+            if (!instance) instance = createInstance();
+            if (!HTMLElement) HTMLElement = createHTML();
             return this;
         },
 
         displayNotification(type, message) {
-            if (!instance) {
-                return;
-            }
+            if (!instance) return;
 
             if (currentNotificationTimeout) {
                 HTMLElement.classList.remove('fade');
@@ -44,11 +37,11 @@ const NotifyService = (function () {
 
             HTMLElement.textContent = message;
             document.body.insertAdjacentElement('afterbegin', HTMLElement);
-            if (type === NotificationTypeEnum.info()) {
+            if (type === NotificationTypeEnum.info) {
                 HTMLElement.classList.remove('error');
                 HTMLElement.classList.add('info');
                 HTMLElement.insertAdjacentHTML('beforeend', '<span class="material-icons">info</span>');
-            } else if (type == NotificationTypeEnum.error()) {
+            } else if (type == NotificationTypeEnum.error) {
                 HTMLElement.classList.remove('info');
                 HTMLElement.classList.add('error');
                 HTMLElement.insertAdjacentHTML('beforeend', '<span class="material-icons">error</span>')
