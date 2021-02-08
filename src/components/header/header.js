@@ -1,29 +1,50 @@
 import AuthService from '../../services/auth/auth.service';
-import './header.css';
 
-export default class Header {
+const headerTemplate = `
+<style>
+header {
+    background-color: var(--dark-primary);
+    color: var(--text-primary);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+img#menu {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+#logout {
+    font-size: 2rem;
+}
+</style>
+<h1>PManagement</h1>
+`;
+
+export default class Header extends HTMLElement {
     constructor() {
+        super();
         this.authService = new AuthService(this.createMenuIcon.bind(this));
     }
 
-    createHeader() {
-        this.header = document.createElement('header');
-        const h1 = document.createElement('h1');
-        h1.textContent = 'PManagement';
-        this.header.append(h1);
-        document.body.insertAdjacentElement('afterbegin', this.header);
+    connectedCallback() {
+        this._render();
+    }
+
+    _render() {
+        const header = document.createElement('header');
+        header.innerHTML = headerTemplate;
+        this.append(header);
     }
 
     createMenuIcon(isLoggedIn) {
-        if (!this.logoutHandler) {
-            this.logoutHandler = this.authService.signOut.bind(this);
-        }
+        if (!this.logoutHandler) this.logoutHandler = this.authService.signOut.bind(this);
         if (isLoggedIn) {
-            if (this.authService.photoURL) {
-                this.createUserIcon();
-            } else {
-                this.createLogoutButton();
-            }
+            this.authService.photoURL ? this.createUserIcon() : this.createLogoutButton();
         } else {
             this.removeMenuIcon();
         }
@@ -34,7 +55,7 @@ export default class Header {
         this.userIcon.id = 'menu';
         this.userIcon.src = this.authService.photoURL;
         this.userIcon.addEventListener('click', this.logoutHandler);
-        this.header.append(this.userIcon);
+        this.querySelector('header').append(this.userIcon);
     }
 
     createLogoutButton() {
@@ -43,7 +64,7 @@ export default class Header {
         this.logoutButton.classList.add('material-icons');
         this.logoutButton.innerText = 'exit_to_app';
         this.logoutButton.addEventListener('click', this.logoutHandler);
-        this.header.append(this.logoutButton);
+        this.querySelector('header').append(this.logoutButton);
     }
 
     removeMenuIcon() {

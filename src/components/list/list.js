@@ -1,9 +1,11 @@
 import './list.css';
 
 import * as firebase from 'firebase/app';
+// import firebase from '../../firebase/index';
 import NotifyService from '../../services/notify/notify.service';
+import ModalService from '../../services/modal/modal.service';
 import Project from '../project/project';
-import { createProjectModal, toggleLoading } from '../../util/dom-helper/dom-helper.service';
+import { createInputElement, toggleLoading } from '../../util/dom-helper/dom-helper.service';
 import { ItemTypeEnum, NotificationTypeEnum } from '../../enums/enums';
 import { hash } from '../../util/hash/hash.service';
 
@@ -11,12 +13,12 @@ export default class List {
 
     constructor(type) {
         this.projectType = type;
-        this.projectType == ItemTypeEnum.active() ? this._ref = '/active-projects' : this._ref = '/finished-projects';
+        this.projectType == ItemTypeEnum.active ? this._ref = '/active-projects' : this._ref = '/finished-projects';
         this._projects = new Map();
     }
 
     setSwitchHandlerFunction(switchHandlerFunction) {
-        this.switchCallback = switchHandlerFunction;
+    this.switchCallback = switchHandlerFunction;
     }
 
     getProjects() {
@@ -39,10 +41,9 @@ export default class List {
         this.section = document.createElement('section');
         const header = document.createElement('header');
         const h2 = document.createElement('h2');
-
         header.append(h2);
-        
-        if (this.projectType == ItemTypeEnum.active()) {
+
+        if (this.projectType == ItemTypeEnum.active) {
             h2.textContent = 'Active projects';
             header.append(this.createAddProjectIcon());
         } else {
@@ -50,9 +51,7 @@ export default class List {
         }
 
         this.section.append(header);
-
         this._projects.size > 0 ? this.createList() : this.createMessage();
-
         this.connectDragEvents();
     }
 
@@ -75,7 +74,7 @@ export default class List {
         this.section.addEventListener('dragover', this.dragOverHandler.bind(this));
 
         this.dragLeaveHandler = event => {
-            const listId = this.projectType == ItemTypeEnum.active() ? 'active-projects-list' : 'finished-projects-list';
+            const listId = this.projectType == ItemTypeEnum.active ? 'active-projects-list' : 'finished-projects-list';
             const projectList = this.section.querySelector('ul');
             if (event.relatedTarget && event.relatedTarget.closest(`#${listId}`) !== projectList) {
                 projectList.classList.remove('droppable');
@@ -110,27 +109,24 @@ export default class List {
     }
 
     openModal() {
-        if (!this.newProjectModal) {
-            import('../modal/modal.js').then(module => {
-                this.newProjectModal = new module.default(createProjectModal('Add new project'));
-                this.confirmNewProjectHandler = this.validateNewProject.bind(this);
-                this.newProjectModal.addEventListener('confirm', this.confirmNewProjectHandler);
-                this.newProjectModal.open();
-            });
-        } else {
-            this.newProjectModal.open();
-        }
+        ModalService.open(
+            'New project',
+            `<div slot="content">
+                ${createInputElement('title').outerHTML}
+                ${createInputElement('content').outerHTML}
+            </div>`,
+            this.validateNewProject.bind(this));
     }
 
     createMessage() {
         const h4 = document.createElement('h4');
-        this.projectType == ItemTypeEnum.active() ? h4.textContent = 'No active projects.' : h4.textContent = 'No finished projects.';
+        this.projectType == ItemTypeEnum.active ? h4.textContent = 'No active projects.' : h4.textContent = 'No finished projects.';
         this.section.append(h4);
     }
 
     createList() {
         const projectList = document.createElement('ul');
-        projectList.id = this.projectType == ItemTypeEnum.active() ? 'active-projects-list' : 'finished-projects-list';
+        projectList.id = this.projectType == ItemTypeEnum.active ? 'active-projects-list' : 'finished-projects-list';
         for (const project of this._projects.values()) {
             projectList.append(project.projectHTML);
             project.projectHTML.scrollIntoView({ behavior: 'smooth' });
@@ -138,16 +134,16 @@ export default class List {
         this.section.append(projectList);
     }
 
-    validateNewProject(project) {
-        const title = project.detail.get('title');
+    validateNewProject(event) {
+        const title = event.detail[0].value.trim();
         if (!title.length) {
-            NotifyService.displayNotification(NotificationTypeEnum.error(), 'Title is required');
+            NotifyService.displayNotification(NotificationTypeEnum.error, 'Title is required');
             return;
         }
 
-        const content = project.detail.get('content');
+        const content = event.detail[1].value.trim();
         if (!content.length) {
-            NotifyService.displayNotification(NotificationTypeEnum.error(), 'Content is required');
+            NotifyService.displayNotification(NotificationTypeEnum.error, 'Content is required');
             return;
         }
 
@@ -159,19 +155,17 @@ export default class List {
 
         const newId = firebase.database().ref(this._ref).child(`${firebase.auth().currentUser.uid}`).push({ title: project.title, content: project.content }).key;
         if (newId) {
-            if (this._projects.size == 0) {
-                this.removeMessage();
-            }
+            if (this._projects.size == 0) this.removeMessage();
 
             if (isNewProject) {
                 project = new Project(newId, project.title, project.content, this.projectType, this.updateProject.bind(this), this.deleteProject.bind(this));
-                this.newProjectModal.hide();
-                NotifyService.displayNotification(NotificationTypeEnum.info(), 'Successfully added new project!');
+                ModalService.hide();
+                NotifyService.displayNotification(NotificationTypeEnum.info, 'Successfully added new project!');
             } else {
                 project._id = newId;
                 project.projectHTML.id = hash(newId);
                 project.type = this.projectType;
-                NotifyService.displayNotification(NotificationTypeEnum.info(), 'Successfully updated project!');
+                NotifyService.displayNotification(NotificationTypeEnum.info, 'Successfully updated project!');
             }
 
             this._projects.set(project._id, project);
@@ -181,13 +175,11 @@ export default class List {
                 this.section.querySelector('ul').append(project.projectHTML);
                 project.projectHTML.scrollIntoView({ behavior: 'smooth' });
             }
-            if (!isNewProject) {
-                project.updateHandlers(this.updateProject.bind(this), this.deleteProject.bind(this));
-            }
+            if (!isNewProject) project.updateHandlers(this.updateProject.bind(this), this.deleteProject.bind(this));
             toggleLoading(false);
         } else {
             toggleLoading(false);
-            NotifyService.displayNotification(NotificationTypeEnum.error(), 'Failed :( ');
+            NotifyService.displayNotification(NotificationTypeEnum.error, 'Failed :( ');
         }
     }
 
@@ -205,10 +197,10 @@ export default class List {
                 this.createMessage();
             }
             toggleLoading(false);
-            NotifyService.displayNotification(NotificationTypeEnum.info(), 'Successfully updated project!');
+            NotifyService.displayNotification(NotificationTypeEnum.info, 'Successfully updated project!');
         }).catch(error => {
             toggleLoading(false);
-            NotifyService.displayNotification(NotificationTypeEnum.error(), error.message);
+            NotifyService.displayNotification(NotificationTypeEnum.error, error.message);
         });
     }
 
@@ -223,22 +215,15 @@ export default class List {
                 this.createMessage();
             }
             toggleLoading(false);
-            NotifyService.displayNotification(NotificationTypeEnum.info(), 'Successfully deleted project!');
+            NotifyService.displayNotification(NotificationTypeEnum.info, 'Successfully deleted project!');
         }).catch(error => {
             toggleLoading(false);
-            NotifyService.displayNotification(NotificationTypeEnum.error(), error.message);
+            NotifyService.displayNotification(NotificationTypeEnum.error, error.message);
         });
     }
 
     removeSection() {
-        if (this.addProjectIcon) {
-            this.addProjectIcon.removeEventListener('click', this.openModalHandler);
-        }
-
-        if (this.newProjectModal) {
-            this.newProjectModal.removeEventListener('confirm', this.confirmNewProjectHandler);
-            this.newProjectModal.removeModalEventListeners();
-        }
+        if (this.addProjectIcon) this.addProjectIcon.removeEventListener('click', this.openModalHandler);
 
         for (const project of this._projects.values()) {
             project.removeProject();
@@ -254,15 +239,11 @@ export default class List {
 
     removeList() {
         const projectList = this.section.querySelector('ul');
-        if (projectList) {
-            projectList.remove();
-        }
+        if (projectList) projectList.remove();
     }
 
     removeMessage() {
         const message = this.section.querySelector('h4');
-        if (message) {
-            message.remove();
-        }
+        if (message) message.remove();
     }
 }

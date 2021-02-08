@@ -8,17 +8,11 @@ export default class AuthService {
         this.loginCallback = loginHandler;
         firebase.auth().onAuthStateChanged(user => {
             if (user) {
-                if (user.photoURL) {
-                    this.photoURL = user.photoURL;
-                }
-                if (this.loginCallback) {
-                    this.loginCallback(true);
-                }
+                if (user.photoURL) this.photoURL = user.photoURL;
+                if (this.loginCallback) this.loginCallback(true);
             } else {
                 this.photoURL = null;
-                if (this.loginCallback) {
-                    this.loginCallback(false);
-                }
+                if (this.loginCallback) this.loginCallback(false);
             }
         });
     }
@@ -28,48 +22,54 @@ export default class AuthService {
     }
 
     handleError(error) {
-        NotifyService.displayNotification(NotificationTypeEnum.error(), error.message)
+        NotifyService.displayNotification(NotificationTypeEnum.error, error.message)
         toggleLoading(false);
     }
 
     loginWithEmail(email, password) {
         toggleLoading(true);
 
-        firebase.auth().signInWithEmailAndPassword(email, password).then(response => {
-            this.photoURL = response.photoURL;
-        }, error => {
-            this.handleError(error);
-        });
+        return new Promise((resolve) => {
+            firebase.auth().signInWithEmailAndPassword(email, password).then(response => {
+                this.photoURL = response.photoURL;
+                resolve();
+            }, error => {
+                this.handleError(error);
+            });
+        })
     }
 
     registerWithEmail(email, password) {
         toggleLoading(true);
 
-        firebase.auth().createUserWithEmailAndPassword(email, password).then(response => {
-            this.photoURL = response.user.photoURL;
-        }, error => {
-            this.handleError(error);
-        });
+        return new Promise((resolve) => {
+            firebase.auth().createUserWithEmailAndPassword(email, password).then(response => {
+                this.photoURL = response.user.photoURL;
+                resolve();
+            }, error => {
+                this.handleError(error);
+            });
+        })
     }
 
     loginWithProvider(providerId) {
         let provider = null;
         switch (providerId) {
-            case ProviderEnum.Google(): {
+            case ProviderEnum.Google: {
                 if (!this.googleProvider) {
                     this.googleProvider = new firebase.auth.GoogleAuthProvider();
                 }
                 provider = this.googleProvider;
                 break;
             }
-            case ProviderEnum.GitHub(): {
+            case ProviderEnum.GitHub: {
                 if (!this.gitHubProvider) {
                     this.gitHubProvider = new firebase.auth.GithubAuthProvider();
                 }
                 provider = this.gitHubProvider;
                 break;
             }
-            case ProviderEnum.Facebook(): {
+            case ProviderEnum.Facebook: {
                 if (!this.facebookProvider) {
                     this.facebookProvider = new firebase.auth.FacebookAuthProvider();
                 }

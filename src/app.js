@@ -3,38 +3,23 @@ import '../assets/styles/app.css';
 import 'material-icons/iconfont/material-icons.css';
 import 'typeface-montserrat';
 
-/*vendor*/
-import * as firebase from 'firebase/app';
-import 'firebase/auth';
-import 'firebase/database';
-
 /*services*/
+import { useFirebase } from './firebase/index';
 import AuthService from './services/auth/auth.service';
 import NotifyService from './services/notify/notify.service';
 import { toggleLoading } from './util/dom-helper/dom-helper.service';
 
-import { ItemTypeEnum } from './enums/enums';
 import Header from './components/header/header';
+import Modal from './components/modal/modal';
+import { ItemTypeEnum } from './enums/enums';
 
 class App {
     init() {
+        useFirebase();
         toggleLoading(true);
-
-        firebase.initializeApp({
-            apiKey: process.env.API_KEY,
-            authDomain: process.env.AUTH_DOMAIN,
-            databaseURL: process.env.DATABASE_URL,
-            projectId: process.env.PROJECT_ID,
-            storageBucket: process.env.STORAGE_BUCKET,
-            messagingSenderId: process.env.MESSAGING_SENDER_ID,
-            appId: process.env.APP_ID
-        });
-
         NotifyService.initializeService();
-
         this.authService = new AuthService(this.loggedInHandler.bind(this));
-        this.header = new Header();
-        this.header.createHeader();
+        document.body.insertAdjacentElement('afterbegin', document.createElement('app-header'))
     }
 
     loggedInHandler(loggedIn) {
@@ -48,8 +33,8 @@ class App {
 
     async getLists() {
         const List = await (await import('./components/list/list.js')).default;
-        this.activeProjects = new List(ItemTypeEnum.active());
-        this.finishedProjects = new List(ItemTypeEnum.finished());
+        this.activeProjects = new List(ItemTypeEnum.active);
+        this.finishedProjects = new List(ItemTypeEnum.finished);
 
         Promise.all([this.activeProjects.getProjects(), this.finishedProjects.getProjects()]).then(() => {
             this.activeProjects.setSwitchHandlerFunction(this.finishedProjects.addProject.bind(this.finishedProjects));
@@ -60,7 +45,7 @@ class App {
 
             projectContainer.append(this.activeProjects.section);
             projectContainer.append(this.finishedProjects.section);
-            document.body.querySelector('header').insertAdjacentElement('afterend', projectContainer)
+            document.body.querySelector('app-header').insertAdjacentElement('afterend', projectContainer)
 
             toggleLoading(false);
         });
@@ -85,4 +70,6 @@ class App {
     }
 }
 
+customElements.define('app-modal', Modal);
+customElements.define('app-header', Header);
 new App().init();
