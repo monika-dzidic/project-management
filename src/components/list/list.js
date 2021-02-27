@@ -1,7 +1,6 @@
 import './list.css';
 
 import * as firebase from 'firebase/app';
-// import firebase from '../../firebase/index';
 import NotifyService from '../../services/notify/notify.service';
 import ModalService from '../../services/modal/modal.service';
 import Project from '../project/project';
@@ -9,7 +8,7 @@ import { createInputElement, toggleLoading } from '../../util/dom-helper/dom-hel
 import { ItemTypeEnum, NotificationTypeEnum } from '../../enums/enums';
 import { hash } from '../../util/hash/hash.service';
 
-export default class List {
+class List {
 
     constructor(type) {
         this.projectType = type;
@@ -18,23 +17,17 @@ export default class List {
     }
 
     setSwitchHandlerFunction(switchHandlerFunction) {
-    this.switchCallback = switchHandlerFunction;
+        this.switchCallback = switchHandlerFunction;
     }
 
-    getProjects() {
-        return new Promise((resolve, reject) => {
-            firebase.database().ref(`${this._ref}/${firebase.auth().currentUser.uid}`).once('value').then(response => {
-                const projects = response.val();
-                for (const key in projects) {
-                    const project = new Project(key, projects[key].title, projects[key].content, this.projectType, this.updateProject.bind(this), this.deleteProject.bind(this));
-                    this._projects.set(project._id, project);
-                }
-                this.createSection();
-                resolve();
-            }, error => {
-                reject(error);
-            });
-        });
+    async getProjects() {
+        const response = await firebase.database().ref(`${this._ref}/${firebase.auth().currentUser.uid}`).once('value');
+        const projects = response.val();
+        for (const key in projects) {
+            const project = new Project(key, projects[key].title, projects[key].content, this.projectType, this.updateProject.bind(this), this.deleteProject.bind(this));
+            this._projects.set(project._id, project);
+        }
+        this.createSection();
     }
 
     createSection() {
@@ -247,3 +240,5 @@ export default class List {
         if (message) message.remove();
     }
 }
+
+export { List }

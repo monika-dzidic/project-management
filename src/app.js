@@ -11,7 +11,7 @@ import { toggleLoading } from './util/dom-helper/dom-helper.service';
 
 import Header from './components/header/header';
 import Modal from './components/modal/modal';
-import { ItemTypeEnum } from './enums/enums';
+import { ItemTypeEnum, NotificationTypeEnum } from './enums/enums';
 
 class App {
     init() {
@@ -32,21 +32,25 @@ class App {
     }
 
     async getLists() {
-        const List = await (await import('./components/list/list.js')).default;
+        const List = await (await import('./components/list/list.js')).List;
         this.activeProjects = new List(ItemTypeEnum.active);
         this.finishedProjects = new List(ItemTypeEnum.finished);
 
-        Promise.all([this.activeProjects.getProjects(), this.finishedProjects.getProjects()]).then(() => {
-            this.activeProjects.setSwitchHandlerFunction(this.finishedProjects.addProject.bind(this.finishedProjects));
-            this.finishedProjects.setSwitchHandlerFunction(this.activeProjects.addProject.bind(this.activeProjects));
-
+        Promise.allSettled([this.activeProjects.getProjects(), this.finishedProjects.getProjects()]).then(response => {
             const projectContainer = document.createElement('div');
             projectContainer.id = 'projects-container';
 
-            projectContainer.append(this.activeProjects.section);
-            projectContainer.append(this.finishedProjects.section);
-            document.body.querySelector('app-header').insertAdjacentElement('afterend', projectContainer)
+            if (response[0].status == 'fulfilled') {
+                this.activeProjects.setSwitchHandlerFunction(this.finishedProjects.addProject.bind(this.finishedProjects));
+                projectContainer.append(this.activeProjects.section);
+            } else NotifyService.displayNotification(NotificationTypeEnum.error, 'Error loading active projects!');
 
+            if (response[1].status == 'fulfilled') {
+                this.finishedProjects.setSwitchHandlerFunction(this.activeProjects.addProject.bind(this.activeProjects));
+                projectContainer.append(this.finishedProjects.section);
+            } else NotifyService.displayNotification(NotificationTypeEnum.error, 'Error loading finished projects!');
+
+            document.body.querySelector('app-header').insertAdjacentElement('afterend', projectContainer)
             toggleLoading(false);
         });
     }
@@ -62,11 +66,10 @@ class App {
     }
 
     async loadLoginModule() {
-        import('./components/login/login.js').then(module => {
-            if (!this.login) {
-                this.login = new module.default();
-            }
-        })
+        if (this.login) return;
+
+        const Login = await (await import('./components/login/login.js')).Login;
+        this.login = new Login();
     }
 }
 
