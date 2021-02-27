@@ -6,7 +6,7 @@ import ModalService from '../../services/modal/modal.service';
 import { createButtonElement, createInputElement, toggleLoading } from '../../util/dom-helper/dom-helper.service';
 import { EventTypeEnum, NotificationTypeEnum, ProviderEnum } from '../../enums/enums';
 
-export default class Login {
+class Login {
     constructor() {
         this.authService = new AuthService(this.handleButtons.bind(this));
         this.svgSrcs = new Map();
@@ -54,7 +54,9 @@ export default class Login {
             this.googleButton.innerText = 'Login with Google';
             const googleSVG = document.createElement('img');
             googleSVG.src = this.svgSrcs.get(ProviderEnum.Google);
-            googleSVG.alt = 'Login with Google';
+            googleSVG.alt = 'Google';
+            googleSVG.style.height = '1.5625rem';
+            googleSVG.style.width = '1.5625rem';
             this.googleButton.insertAdjacentElement('afterbegin', googleSVG);
             this.loginWithGoogleHandler = this.authService.loginWithProvider.bind(this.authService, ProviderEnum.Google);
         }
@@ -69,6 +71,8 @@ export default class Login {
             const gitHubSVG = document.createElement('img');
             gitHubSVG.src = this.svgSrcs.get(ProviderEnum.GitHub);
             gitHubSVG.alt = 'Login with GitHub';
+            gitHubSVG.style.height = '1.5625rem';
+            gitHubSVG.style.width = '1.5625rem';
             this.gitHubButton.insertAdjacentElement('afterbegin', gitHubSVG);
             this.loginWithGitHubHandler = this.authService.loginWithProvider.bind(this.authService, ProviderEnum.GitHub);
         }
@@ -83,6 +87,8 @@ export default class Login {
             const facebookSVG = document.createElement('img');
             facebookSVG.src = this.svgSrcs.get(ProviderEnum.Facebook);
             facebookSVG.alt = 'Login with Facebook';
+            facebookSVG.style.height = '1.5625rem';
+            facebookSVG.style.width = '1.5625rem';
             this.facebookButton.insertAdjacentElement('afterbegin', facebookSVG);
             this.loginWithFacebookHandler = this.authService.loginWithProvider.bind(this.authService, ProviderEnum.Facebook);
         }
@@ -157,3 +163,5 @@ export default class Login {
         if (this.registerButton) this.registerButton.removeEventListener('click', this.registerFormHandler);
     }
 }
+
+export { Login }
