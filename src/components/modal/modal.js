@@ -1,38 +1,34 @@
-import { EventTypeEnum } from "../../enums/enums";
+import { EventTypeEnum } from '../../enums/enums';
 
 export default class Modal extends HTMLElement {
-    constructor() {
-        super();
-    }
+  get title() {
+    const prop = this.getAttribute('title');
+    return prop || 'PManagement';
+  }
 
-    get title() {
-        const prop = this.getAttribute('title');
-        return prop ? prop : 'PManagement';
-    }
+  set title(value) {
+    this.setAttribute('title', value);
+  }
 
-    set title(value) {
-        this.setAttribute("title", value);
-    }
+  static get observedAttributes() {
+    return ['title'];
+  }
 
-    static get observedAttributes() {
-        return ["title"];
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'title' && this.shadowRoot) {
+      this.shadowRoot.querySelector('h2').textContent = newValue;
     }
+  }
 
-    attributeChangedCallback(name, oldValue, newValue) {
-        if (name === "title" && this.shadowRoot) {
-            this.shadowRoot.querySelector("h2").textContent = newValue;
-        }
-    }
+  connectedCallback() {
+    this._render();
+    this._appendListeners();
+  }
 
-    connectedCallback() {
-        this._render();
-        this._appendListeners();
-    }
-
-    _render() {
-        const modal = document.createElement('div');
-        modal.id = 'app-modal';
-        modal.innerHTML = `
+  _render() {
+    const modal = document.createElement('div');
+    modal.id = 'app-modal';
+    modal.innerHTML = `
             <style>            
                 .modal {
                     position: absolute;
@@ -110,15 +106,15 @@ export default class Modal extends HTMLElement {
             </div>
         `;
 
-        modal.querySelector('button#cancel').addEventListener('click', () => this.dispatchEvent(new CustomEvent(EventTypeEnum.cancel)));
-        modal.querySelector('button#confirm').addEventListener('click', () => this.dispatchEvent(new CustomEvent(EventTypeEnum.confirm, { detail: this.querySelectorAll('input') })));
-        this.attachShadow({ mode: 'open' }).appendChild(modal);
-    }
+    modal.querySelector('button#cancel').addEventListener('click', () => this.dispatchEvent(new CustomEvent(EventTypeEnum.cancel)));
+    modal.querySelector('button#confirm').addEventListener('click', () => this.dispatchEvent(new CustomEvent(EventTypeEnum.confirm, { detail: this.querySelectorAll('input') })));
+    this.attachShadow({ mode: 'open' }).appendChild(modal);
+  }
 
-    _appendListeners() {
-        const actionButtons = this.querySelectorAll('button');
-        actionButtons.forEach(button => {
-            button.addEventListener('click', () => this.dispatchEvent(new CustomEvent(button.attributes.actionType.value, { detail: { inputs: this.querySelectorAll('input'), target: button } })))
-        });
-    }
+  _appendListeners() {
+    const actionButtons = this.querySelectorAll('button');
+    actionButtons.forEach((button) => {
+      button.addEventListener('click', () => this.dispatchEvent(new CustomEvent(button.attributes.actionType.value, { detail: { inputs: this.querySelectorAll('input'), target: button } })));
+    });
+  }
 }
